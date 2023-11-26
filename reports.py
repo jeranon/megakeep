@@ -86,6 +86,25 @@ def generate_report(changes, log_data2):
 
     return ''.join(report_lines)
 
+def generate_report_for_single_log(log_data):
+    # Generate a report considering all accounts as new
+    total_space_used = sum([data['used'] for data in log_data.values()]) / 1024  # Convert to GB
+    total_space_remaining = sum([data['total'] - data['used'] for data in log_data.values()]) / 1024  # Convert to GB
+
+    report_lines = [
+        "MegaKeep Single Log Report\n\n",
+        f"Total space used: {total_space_used:.2f} GB\n",
+        f"Total space available: {total_space_remaining:.2f} GB\n\n",
+        "All Accounts (as new):\n"
+    ]
+
+    for email, data in log_data.items():
+        space_used = data['used'] / 1024  # Convert to GB
+        space_remaining = (data['total'] - data['used']) / 1024  # Convert to GB
+        report_lines.append(f"\t{email} - Space used: {space_used:.2f} GB, Space remaining: {space_remaining:.2f} GB\n")
+
+    return ''.join(report_lines)
+
 def main():
     args = parse_arguments()
     log_dir = 'logs/raw'
@@ -96,19 +115,22 @@ def main():
     else:
         log_files = find_recent_logs(log_dir)
 
-    log_data1 = parse_log_file(log_files[0])
-    log_data2 = parse_log_file(log_files[1])
+    if len(log_files) < 2:
+        # Only one log file found, treat all accounts as new
+        log_data = parse_log_file(log_files[0])
+        report = generate_report_for_single_log(log_data)
+        report_filename = f"{report_dir}/single_log_report_{datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}.txt"
+    else:
+        log_data1 = parse_log_file(log_files[0])
+        log_data2 = parse_log_file(log_files[1])
+        changes = compare_logs(log_data1, log_data2)
+        report = generate_report(changes, log_data2)
+        date1 = os.path.basename(log_files[0])[9:-4].split('_')[0]
+        date2 = os.path.basename(log_files[1])[9:-4].split('_')[0]
+        report_filename = f"{report_dir}/change_report_{date1}_-_{date2}.txt"
 
-    changes = compare_logs(log_data1, log_data2)
-    report = generate_report(changes, log_data2)
-    
-    # Extract just the dates from the log filenames
-    date1 = os.path.basename(log_files[0])[9:-4].split('_')[0]
-    date2 = os.path.basename(log_files[1])[9:-4].split('_')[0]
-    
-    report_filename = f"{report_dir}/change_report_{date1}_-_{date2}.txt"
     with open(report_filename, 'w') as f:
         f.write(report)
-        
+
 if __name__ == '__main__':
     main()
