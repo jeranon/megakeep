@@ -3,57 +3,44 @@
 Simple command-line application to "touch" your Mega accounts and avoid getting closed due to inactivity.
 
 ## How to use?
-#### Install package
-run:  
-```bash
-pip install megakeep
-```    
-#### Create passwords file
-create file containing your mega account
-- each line should contain email and password separated in space/tab.
-- multiple spaces are allowed.
-- comments are allowed (# and //).
-- empty lines are allowed.
+- run "pip install -r requirements.txt"
+- ensure you have a space separated mega.txt in the root folder of the repository.
+- run main.py
 
-i.e.:
-```text
-bla@email.com       mypa55
-another@account.com n1cePass
-# Bob's account:
-bob_mega@gmail.com  ilovemega
-// my secret account
-oh@im.god look-at-my-drive
-```  
-#### Run
-run one of the following:  
-```bash
-megakeep --file mega.txt
-megakeep -f mega.txt
-``` 
+You can add comments to each account's line, an example would be:
+account@account.com SuperToughPasswordHere #Golden Girls S1-3
 
-or if your file named mega.txt and in your current directory:  
-```bash
-megakeep
-``` 
+While it runs, it will create a log file in this format in the logs/raw folder:
+2023-11-25 21:52:10,299 Account account@account.com touched. Quota: 20480.0, Space used: {'used': 16285.399144172668, 'total': 20480.0} MB
+2023-11-25 21:52:13,576 Account account2@account.com touched. Quota: 20480.0, Space used: {'used': 15543.904494285583, 'total': 20480.0} MB
 
-##### All flags
-- --help
-- --file _or_ -f
-- --skip-fails _or_ -s
+Once it has completed running, it will create a report in logs/reports:
+Each report will be structured like this:
 
-## Run megakeep from source
-- git clone the project
-- run ```python -m main.py --file path/to/file```
+MegaKeep Account Changes Report
 
-## Build megakeep from source
-- git clone the project
-- run ```python setup.py install```
+Total space used: xxxx.xx GB
+Total Space available: xxxx.xx GB
 
-## Install megakeep from source
-- git clone the project
-- run ``` python setup.py sdist bdist_wheel```
+Summary:
+    Added: xxx accounts
+    Content Increased: xxx accounts
+    Content Decreased: xxx accounts
+    Unchanged: xxx accounts
 
-## Upload to PyPI
-- ```pip install twine```
-- ```twine upload --repository-url https://test.pypi.org/legacy/ dist/*```
-- ```twine upload dist/*```   
+Added:
+    accountAdded@account.com - Space used: 14.40 GB, Space remaining: 5.60 GB
+
+Content Increased:
+    accountIncreased@account.com - Space used: 13.18 GB, Space remaining: 6.82 GB
+
+Content Decreased:
+    accountDecreased@account.com - Space used: 10.26GB, Space remaining: 9.74 GB
+
+Unchanged:
+    accountUnchanged@account.com - Space used: 17.09 GB, Space remaining: 2.91 GB
+
+
+What I hope to do is add a little functionality to the script. If you have previously added accounts, you'll see them, if an account you previously had is no longer there, it will let you know that. If you have increased the content or decreased the content, you'll see that too.
+
+Enjoy!!
