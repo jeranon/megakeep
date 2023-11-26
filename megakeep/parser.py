@@ -23,10 +23,15 @@ class Parser:
     @staticmethod
     def _get_clean_file_in_lines(file: str) -> List[str]:
         return [
-            re.sub(r"\s+", " ", line.strip())
+            re.sub(r"\s+", " ", Parser._remove_comment(line).strip())
             for line in pathlib.Path(file).read_text().splitlines()
-            if not Parser._is_empty_or_comment(line)
+            if not Parser._is_empty_or_comment(Parser._remove_comment(line))
         ]
+
+    @staticmethod
+    def _remove_comment(line: str) -> str:
+        # Remove everything after the first #
+        return line.split('#', 1)[0]
 
     @staticmethod
     def _is_empty_or_comment(string: str) -> bool:

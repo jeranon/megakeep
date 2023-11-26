@@ -1,13 +1,41 @@
 import click
+import logging
 from tqdm import tqdm
 from mega import Mega
 from mega.errors import RequestError
-
+import datetime
+import os
+from reports import main as generate_report
 from .parser import Parser
 from .user import User
 
-mega = Mega()
+# Define the AccountFilter class
+class AccountFilter(logging.Filter):
+    def filter(self, record):
+        return 'Account' in record.getMessage()
 
+# Define directories for logs
+log_dir = 'logs/raw'
+report_dir = 'logs/reports'
+
+# Create directories if they don't exist
+os.makedirs(log_dir, exist_ok=True)
+os.makedirs(report_dir, exist_ok=True)
+
+# Generate a current date-time string for the log filename
+current_time_str = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+log_filename = f"{log_dir}/megakeep_{current_time_str}.log"
+
+# Set up logging
+logging.basicConfig(filename=log_filename, level=logging.INFO, format='%(asctime)s %(message)s')
+logging.getLogger('mega').setLevel(logging.WARNING)
+
+# Create and add the filter to the logger
+logger = logging.getLogger()
+account_filter = AccountFilter()
+logger.addFilter(account_filter)
+
+mega = Mega()
 
 @click.command()
 @click.option(
@@ -47,13 +75,19 @@ def main(file: str, skip_fails: bool) -> None:
         except RuntimeError:
             if not skip_fails:
                 raise click.Abort()
-    print(f"Done!")
 
+    print(f"Done! Generating report...")
 
+    # Call the main function of reports.py
+    generate_report()
+    
 def login_user(user: User) -> None:
     try:
         logged_user = mega.login(user.email, user.password)
-        logged_user.get_user()  # some action to do on the account without any side effects
+        quota = logged_user.get_quota()
+        space = logged_user.get_storage_space(mega=True)
+
+        logging.info(f"Account {user.email} touched. Quota: {quota}, Space used: {space} MB")
     except RequestError as e:
         if e.code == -9:
             print(f"{user.email}: wrong email or password")
@@ -62,3 +96,6 @@ def login_user(user: User) -> None:
         else:
             print(f"{user.email}: unknown exception in Mega.")
         raise RuntimeError(e)
+
+if __name__ == '__main__':
+    main()
